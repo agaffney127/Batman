@@ -6,6 +6,7 @@ int status = WL_IDLE_STATUS;
 WiFiServer server(5200);
 WiFiClient client;
 
+bool hadObject = false;
 // Pin Assignments
 const int LIR = 8;
 const int RIR = 7;
@@ -24,7 +25,7 @@ long duration;
 int distance;
 
 //intial mode for buggy until told otherwise
-String mode = "Stop";
+char mode = 'S';
 String msg = "";
 
 void right(){
@@ -43,7 +44,7 @@ void left(){
 
 // Two function for the basics of turning right or left for set time
 void spinRight(int duration){
-  analogWrite(leftPermission,100);
+  analogWrite(leftPermission,120);
   analogWrite(rightPermission,0);
   digitalWrite(leftForward,HIGH);
   digitalWrite(leftReverse,LOW);
@@ -64,13 +65,13 @@ void spinLeft(int duration){
 
 //Small step procedure for adjustments prompted by IR sensors
 void Step_Right(){
-  spinRight(25);
-  client.println("Adjusting Course");
+  spinRight(50);
+  client.println("Adjusting Course Right");
 }
 
 void Step_Left(){
   spinLeft(50);
-  client.println("Adjusting Course");
+  client.println("Adjusting Course Left");
 }
 
 // Funtions which return true if the buggy detects it has crossed the line
@@ -125,7 +126,7 @@ void reverse(){
 
 //Basic function for buggy to drive forward for duration
 void Mush(int duration){
-  analogWrite(leftPermission,100);
+  analogWrite(leftPermission,105);
   analogWrite(rightPermission,100);
 
 
@@ -135,7 +136,7 @@ void Mush(int duration){
   digitalWrite(rightReverse,LOW);
   
 
-  
+  client.println("Going Forward");
   delay(duration);
 
   digitalWrite(leftForward,LOW);
@@ -160,8 +161,11 @@ bool Bogie(){
 
   if(distance < Safe_Distance) {
     client.println("Obstacle in Path");
+    hadObject = true
     return true;
   }
+  if (hadObject)client.println("Object Removed");
+  hadObject = false;
   return false;
 
 
@@ -208,14 +212,12 @@ void loop() {
   if (client){
     msg = client.readString();
     if (msg != ("")){
-      mode = msg;
+      mode = msg[0];
     }
   }
 
-
-
   
-  if(mode == "Forward"){
+  if(mode == 'F'){
     if (!Bogie()){
       if (Right_Error()){
         while(Right_Error()){
@@ -227,8 +229,9 @@ void loop() {
           Step_Right();
         }
       }
-      Mush(100);
+      Mush(150);
     }
   }
+  else client.println("Stopped");
   
 }
