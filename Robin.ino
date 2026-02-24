@@ -18,6 +18,8 @@ const int leftForward = 1;
 const int leftReverse=2;
 const int rightForward = A1;
 const int rightReverse = A2;
+int right = 100;
+int left = 100;
 
 //Variable for the use of the ultra sonic sensor
 const int Safe_Distance= 30;
@@ -28,19 +30,6 @@ int distance;
 char mode = 'S';
 String msg = "";
 
-void right(){
-  analogWrite(leftPermission,100);
-  analogWrite(rightPermission,0);
-  digitalWrite(leftForward,HIGH);
-  digitalWrite(leftReverse,LOW);
-}
-
-void left(){
-  analogWrite(rightPermission,100);
-  analogWrite(leftPermission,0);
-  digitalWrite(rightForward,HIGH);
-  digitalWrite(rightReverse,LOW);
-}
 
 // Two function for the basics of turning right or left for set time
 void spinRight(int duration){
@@ -65,18 +54,18 @@ void spinLeft(int duration){
 
 //Small step procedure for adjustments prompted by IR sensors
 void Step_Right(){
-  spinRight(50);
+  spinRight(25);
   client.println("Adjusting Course Right");
 }
 
 void Step_Left(){
-  spinLeft(50);
+  spinLeft(25);
   client.println("Adjusting Course Left");
 }
 
 // Funtions which return true if the buggy detects it has crossed the line
 bool Left_Error(){
-  if(digitalRead(LIR)==LOW){
+  if(digitalRead(LIR)== LOW){
     return true;
 
   }
@@ -92,42 +81,14 @@ bool Right_Error(){
   return false;
   }
 
-void go(){
-  analogWrite(leftPermission,100);
-  analogWrite(rightPermission,100);
 
-  digitalWrite(leftForward,HIGH);
-  digitalWrite(rightForward,HIGH);
-  digitalWrite(leftReverse,LOW);
-  digitalWrite(rightReverse,LOW);
-}
-
-void stop(){
-  analogWrite(leftPermission,0);
-  analogWrite(rightPermission,0);
-  digitalWrite(leftForward,LOW);
-  digitalWrite(rightForward,LOW);
-  digitalWrite(leftReverse,LOW);
-  digitalWrite(rightReverse,LOW);
-
-}
-
-void reverse(){
-  analogWrite(leftPermission,100);
-  analogWrite(rightPermission,100);
-
-  digitalWrite(leftReverse,HIGH);
-  digitalWrite(rightReverse,HIGH);
-  digitalWrite(leftForward,LOW);
-  digitalWrite(rightForward,LOW); 
-}
 
 
 
 //Basic function for buggy to drive forward for duration
-void Mush(int duration){
-  analogWrite(leftPermission,105);
-  analogWrite(rightPermission,100);
+void Mush(int duration, int left, int right){
+  analogWrite(leftPermission,left);
+  analogWrite(rightPermission,right);
 
 
   digitalWrite(leftForward,HIGH);
@@ -161,7 +122,7 @@ bool Bogie(){
 
   if(distance < Safe_Distance) {
     client.println("Obstacle in Path");
-    hadObject = true
+    hadObject = true;
     return true;
   }
   if (hadObject)client.println("Object Removed");
@@ -211,9 +172,17 @@ void loop() {
   client = server.available ();
   if (client){
     msg = client.readString();
-    if (msg != ("")){
+    if (msg != ("") || msg[1] == 'F' || msg[1]=='S'){
       mode = msg[0];
     }
+    if (msg[1]=='+') {
+      if(msg[2]=='L') left += 5;
+    }
+    else right += 5;
+    if (msg[1]=='-') {
+      if(msg[2]=='L') left -= 5;
+    }
+    else right -= 5;
   }
 
   
@@ -229,9 +198,10 @@ void loop() {
           Step_Right();
         }
       }
-      Mush(150);
+      Mush(150,left,right);
     }
   }
   else client.println("Stopped");
+}
   
 }
