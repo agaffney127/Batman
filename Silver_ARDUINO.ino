@@ -59,40 +59,65 @@ float value;
 int distance = 0;
 
 void loop() {
+
   WiFiClient newClient = server.available(); 
+
+  // Only update client if a new one connects
   if (newClient) {
-    client = newClient;  // only overwrite when there's actually a new connection
+    client = newClient;
   }
 
   if (client && client.connected()) {
-    if (client.available()) { //only try to read when there's data
-      msg = client.readStringUntil('\n'); 
+
+    if (client.available()) {
+
+      String msg = client.readStringUntil('\n');
       msg.trim();
-      if (msg!= "STOP"){
-        command = msg.charAt(0);
-        num = msg.substring(2);
-        value = num.toFloat();
+
+      Serial.println("Received: " + msg);
+
+  
+
+      // ---------------- PARSE COMMAND ----------------
+      char command = msg.charAt(0);
+      String num = msg.substring(2);
+      float value = num.toFloat();
+
+      // ---------------- FORWARD ----------------
+      if (command == 'F') {
+
+       
+
+
+          forward(value);   // move in small chunks
+         
+
+   // small delay for stability
+
+
+        
+        client.println("DONE");
       }
 
-  if (command == 'F'){
-    for(int i=0, i < value/5, i++);
-      forward(value);
-      distance += 5;
-      client.print("DIST:");
-      client.prinln(distance)
-    client.prinln("DONE");
+      // ---------------- LEFT ----------------
+      else if (command == 'L') {
+
+        spinLeft(1300);   // use actual value
+
+        client.println("DONE");
+      }
+
+      // ---------------- RIGHT ----------------
+      else if (command == 'R') {
+
+        spinRight(1300);  // use actual value
+
+        client.println("DONE");
+      }
+    }
   }
-
-  if (command == 'L'){
-    spinLeft(100);
-    client.prinln("DONE");
-  }
-
-  if (command == 'R'){
-    spinRight(100);
-    client.prinln("DONE");
-  }
-
-
-
 }
+
+
+
+
